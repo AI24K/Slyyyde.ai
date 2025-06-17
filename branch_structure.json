@@ -1,0 +1,30 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "fetch-user-mcp",
+    "http/mcp",
+    "issue/chat-error",
+    "issue/cors",
+    "main",
+    "origin",
+    "update/logo"
+  ],
+  "parent": {
+    "fetch-user-mcp": "main",
+    "http/mcp": "main",
+    "issue/chat-error": "main",
+    "issue/cors": "main",
+    "main": null,
+    "origin": "main",
+    "update/logo": "main"
+  },
+  "order": [
+    "main",
+    "fetch-user-mcp",
+    "http/mcp",
+    "issue/chat-error",
+    "issue/cors",
+    "origin",
+    "update/logo"
+  ]
+}

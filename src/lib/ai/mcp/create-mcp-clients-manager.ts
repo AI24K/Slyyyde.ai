@@ -14,7 +14,7 @@ import { createMCPToolId } from "./mcp-tool-id";
  */
 export interface MCPConfigStorage {
   init(manager: MCPClientsManager): Promise<void>;
-  loadAll(): Promise<Record<string, MCPServerConfig>>;
+  loadAll(userId: string): Promise<Record<string, MCPServerConfig>>;
   save(name: string, config: MCPServerConfig): Promise<void>;
   delete(name: string): Promise<void>;
   has(name: string): Promise<boolean>;
@@ -35,13 +35,8 @@ export class MCPClientsManager {
     if (this.initialized) return;
     if (this.storage) {
       await this.storage.init(this);
-      const configs = await this.storage.loadAll();
-      await Promise.all(
-        Object.entries(configs).map(([name, serverConfig]) =>
-          this.addClient(name, serverConfig)
-        )
-      );
     }
+    this.initialized = true;
   }
 
   /**

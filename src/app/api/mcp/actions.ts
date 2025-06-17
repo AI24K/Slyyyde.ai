@@ -6,8 +6,22 @@ import { detectConfigChanges } from "lib/ai/mcp/mcp-config-diff";
 import { z } from "zod";
 import { safe } from "ts-safe";
 import { errorToString } from "lib/utils";
+import { getSession } from "auth/server";
 
 export async function selectMcpClientsAction() {
+  const session = await getSession();
+  console.log("Session form selectMcpClientsAction ", session);
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  // Get the storage from the manager
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    // Load configs for the current user
+    await storage.loadAll(session.user.id);
+  }
+
   const list = mcpClientsManager.getClients();
   return list.map((client) => {
     return client.getInfo();
@@ -19,7 +33,6 @@ export async function selectMcpClientAction(name: string) {
     .getClients()
     .find((client) => client.getInfo().name === name);
 
-  console.log("mcp-clients: ", client);
   if (!client) {
     throw new Error("Client not found");
   }
