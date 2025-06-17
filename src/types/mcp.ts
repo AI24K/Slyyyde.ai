@@ -60,7 +60,7 @@ export interface MCPRepository {
     config: MCPServerConfig;
     enabled: boolean;
   } | null>;
-  selectAllServers(): Promise<
+  selectAllServers(userId: string): Promise<
     {
       id: string;
       name: string;

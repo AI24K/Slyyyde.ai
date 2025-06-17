@@ -8,22 +8,37 @@ import logger from "logger";
 import { createDebounce } from "lib/utils";
 import equal from "fast-deep-equal";
 import { getSession } from "auth/server";
+
 export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
   // In-memory cache for configs
   const configs: Map<string, MCPServerConfig> = new Map();
-
   let manager: MCPClientsManager;
+  let currentUserId: string | null = null;
+  let intervalId: NodeJS.Timeout | null = null;
 
   const debounce = createDebounce();
 
   // Loads all enabled server configs from the database into the in-memory cache
   async function saveToCacheFromDb() {
     try {
-      const servers = await mcpRepository.selectAllServers();
+      if (!currentUserId) {
+        logger.warn("No user ID available when loading MCP configs");
+        return;
+      }
+      const servers = await mcpRepository.selectAllServers(currentUserId);
       configs.clear();
       servers.forEach((server) => {
         configs.set(server.name, server.config);
       });
+
+      // Initialize clients for all configs
+      if (manager) {
+        await Promise.all(
+          Array.from(configs.entries()).map(([name, config]) =>
+            manager.addClient(name, config)
+          )
+        );
+      }
     } catch (error) {
       logger.error("Failed to load MCP configs from database:", error);
     }
@@ -35,6 +50,8 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
   }
 
   async function checkAndRefreshClients() {
+    if (!currentUserId) return;
+
     let shouldRefresh = false;
     await saveToCacheFromDb();
     const dbConfigs = Array.from(configs.entries())
@@ -91,20 +108,39 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
     }
   }
 
-  setInterval(() => debounce(checkAndRefreshClients, 5000), 60000).unref();
+  function startInterval() {
+    if (intervalId) return;
+    intervalId = setInterval(
+      () => debounce(checkAndRefreshClients, 5000),
+      60000
+    );
+    intervalId.unref();
+  }
 
   return {
     init,
-    async loadAll(): Promise<Record<string, MCPServerConfig>> {
-      // Always load the latest configs from the database
-      await saveToCacheFromDb();
-      return Object.fromEntries(configs);
+    async loadAll(userId): Promise<Record<string, MCPServerConfig>> {
+      console.log("Load ALL: ", userId);
+      try {
+        const session = await getSession();
+        if (session?.user?.id) {
+          currentUserId = session.user.id;
+          startInterval();
+          await saveToCacheFromDb();
+        }
+        return Object.fromEntries(configs);
+      } catch (error) {
+        logger.error("Failed to load MCP configs:", error);
+        return {};
+      }
     },
     async save(name: string, config: MCPServerConfig): Promise<void> {
       const session = await getSession();
-      if (!session || !session.user) {
+      if (!session?.user?.id) {
         throw new Error("User session not found");
       }
+      currentUserId = session.user.id;
+      startInterval();
       try {
         const existingServer = await mcpRepository.selectServerByName(name);
         if (existingServer) {
@@ -117,6 +153,10 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
           });
         }
         configs.set(name, config);
+        // Initialize the client after saving
+        if (manager) {
+          await manager.addClient(name, config);
+        }
       } catch (error) {
         logger.error(`Failed to save MCP config "${name}" to database:`, error);
         throw error;
@@ -129,6 +169,10 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
           await mcpRepository.deleteServer(server.id);
         }
         configs.delete(name);
+        // Remove the client after deleting
+        if (manager) {
+          await manager.removeClient(name);
+        }
       } catch (error) {
         logger.error(
           `Failed to delete MCP config "${name}" from database:",`,
