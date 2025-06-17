@@ -55,12 +55,8 @@ export const pgMcpRepository: MCPRepository = {
     };
   },
 
-  async selectAllServers() {
-    // const session = authClient.getSession();
-    // console.log("Session in selectAllServers:", session);
-    const response = await onGetAllMcpServers();
-
-    return response;
+  async selectAllServers(userId: string) {
+    return onGetAllMcpServers(userId);
   },
 
   async updateServer(id, data) {
