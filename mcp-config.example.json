@@ -1,0 +1,12 @@
+{
+  "mem0-mcp": {
+    "command": "uvicorn",
+    "args": ["main:app", "--host", "0.0.0.0", "--port", "8080"],
+    "cwd": "./mem0-mcp-server"
+  },
+  "custom-mcp": {
+    "command": "tsx",
+    "args": ["custom-mcp-server/index.ts"],
+    "cwd": "."
+  }
+}
