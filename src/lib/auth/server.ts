@@ -31,11 +31,7 @@ export const auth = betterAuth({
       verification: VerificationSchema,
     },
   }),
-  baseURL:
-    process.env.BETTER_AUTH_URL ??
-    (IS_VERCEL_ENV
-      ? `https://${process.env.VERCEL_URL}`
-      : `http://localhost:${process.env.PORT ?? 3000}`),
+  baseURL: process.env.NEXT_PUBLIC_AUTH_BASE_URL,
   emailAndPassword: {
     enabled: true,
     disableSignUp: process.env.DISABLE_SIGN_UP == "true" ? true : false,
