@@ -1,10 +1,9 @@
 {
-  "name": "mcp-client-chatbot",
+  "name": "slyyyde-ai",
   "version": "0.1.0",
   "private": true,
-  "author": "cgoing",
+  "author": "Devante",
   "license": "MIT",
-  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
