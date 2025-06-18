@@ -23,7 +23,6 @@ import { GoogleIcon } from "ui/google-icon";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState(false);
-  const session =  authClient.useSession()
   const [formData, setFormData] = useObjectState({
     email: "",
     password: "",
