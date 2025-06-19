@@ -7,7 +7,7 @@ import {
   buildProjectInstructionsSystemPrompt,
   buildUserSystemPrompt,
 } from "lib/ai/prompts";
-import { mcpClientsManager } from "lib/ai/mcp/mcp-manager";
+import { createUserScopedMCPManager } from "lib/ai/mcp/mcp-manager";
 import { errorIf, safe } from "ts-safe";
 import { DEFAULT_VOICE_TOOLS } from "lib/ai/speech";
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
         JSON.stringify({ error: "OPENAI_API_KEY is not set" }),
         {
           status: 500,
-        },
+        }
       );
     }
 
@@ -42,9 +42,13 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = mergeSystemPrompt(
       buildUserSystemPrompt(session.user, userPreferences),
-      buildProjectInstructionsSystemPrompt(instructions),
+      buildProjectInstructionsSystemPrompt(instructions)
     );
 
+    const mcpClientsManager = createUserScopedMCPManager();
+    await mcpClientsManager.init();
+    const storage = (mcpClientsManager as any).storage;
+    await storage.loadAll(session.user.id);
     const mcpTools = mcpClientsManager.tools();
 
     const tools = safe(mcpTools)

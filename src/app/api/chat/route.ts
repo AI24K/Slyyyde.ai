@@ -11,7 +11,7 @@ import {
 
 import { customModelProvider, isToolCallUnsupportedModel } from "lib/ai/models";
 
-import { mcpClientsManager } from "lib/ai/mcp/mcp-manager";
+import { createUserScopedMCPManager } from "lib/ai/mcp/mcp-manager";
 
 import { chatRepository } from "lib/db/repository";
 import logger from "logger";
@@ -92,6 +92,10 @@ export async function POST(request: Request) {
 
     const annotations = (message?.annotations as ChatMessageAnnotation[]) ?? [];
 
+    const mcpClientsManager = createUserScopedMCPManager();
+    await mcpClientsManager.init();
+    const storage = (mcpClientsManager as any).storage;
+    await storage.loadAll(session.user.id);
     const mcpTools = mcpClientsManager.tools();
 
     const isToolCallAllowed =
@@ -135,20 +139,20 @@ export async function POST(request: Request) {
     return createDataStreamResponse({
       execute: async (dataStream) => {
         const inProgressToolStep = extractInProgressToolPart(
-          messages.slice(-2),
+          messages.slice(-2)
         );
 
         if (inProgressToolStep) {
           const toolResult = await manualToolExecuteByLastMessage(
             inProgressToolStep,
-            message,
+            message
           );
           assignToolResult(inProgressToolStep, toolResult);
           dataStream.write(
             formatDataStreamPart("tool_result", {
               toolCallId: inProgressToolStep.toolInvocation.toolCallId,
               result: toolResult,
-            }),
+            })
           );
         }
 
@@ -156,7 +160,7 @@ export async function POST(request: Request) {
 
         const systemPrompt = mergeSystemPrompt(
           buildUserSystemPrompt(session.user, userPreferences),
-          buildProjectInstructionsSystemPrompt(thread?.instructions),
+          buildProjectInstructionsSystemPrompt(thread?.instructions)
         );
 
         // Precompute toolChoice to avoid repeated tool calls
@@ -202,7 +206,7 @@ export async function POST(request: Request) {
                 {
                   usageTokens: usage.completionTokens,
                   toolChoice,
-                },
+                }
               );
               dataStream.writeMessageAnnotation(annotations.at(-1)!);
               await chatRepository.upsertMessage({
