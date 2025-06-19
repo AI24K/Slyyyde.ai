@@ -5,8 +5,6 @@ import type {
 } from "./create-mcp-clients-manager";
 import { mcpRepository } from "lib/db/repository";
 import logger from "logger";
-import { createDebounce } from "lib/utils";
-import equal from "fast-deep-equal";
 import { getSession } from "auth/server";
 
 export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
@@ -14,9 +12,6 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
   const configs: Map<string, MCPServerConfig> = new Map();
   let manager: MCPClientsManager;
   let currentUserId: string | null = null;
-  let intervalId: NodeJS.Timeout | null = null;
-
-  const debounce = createDebounce();
 
   // Loads all enabled server configs from the database into the in-memory cache
   async function saveToCacheFromDb() {
@@ -49,73 +44,64 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
     manager = _manager;
   }
 
-  async function checkAndRefreshClients() {
-    if (!currentUserId) return;
+  // async function checkAndRefreshClients() {
+  //   if (!currentUserId) return;
 
-    let shouldRefresh = false;
-    await saveToCacheFromDb();
-    const dbConfigs = Array.from(configs.entries())
-      .map(([name, config]) => {
-        return {
-          name,
-          config,
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
+  //   let shouldRefresh = false;
+  //   await saveToCacheFromDb();
+  //   const dbConfigs = Array.from(configs.entries())
+  //     .map(([name, config]) => {
+  //       return {
+  //         name,
+  //         config,
+  //       };
+  //     })
+  //     .sort((a, b) => a.name.localeCompare(b.name));
 
-    const managerConfigs = manager
-      .getClients()
-      .map((client) => {
-        const info = client.getInfo();
-        return {
-          name: info.name,
-          config: info.config,
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
+  //   const managerConfigs = manager
+  //     .getClients()
+  //     .map((client) => {
+  //       const info = client.getInfo();
+  //       return {
+  //         name: info.name,
+  //         config: info.config,
+  //       };
+  //     })
+  //     .sort((a, b) => a.name.localeCompare(b.name));
 
-    if (dbConfigs.length !== managerConfigs.length) {
-      shouldRefresh = true;
-    }
+  //   if (dbConfigs.length !== managerConfigs.length) {
+  //     shouldRefresh = true;
+  //   }
 
-    if (!equal(dbConfigs, managerConfigs)) {
-      shouldRefresh = true;
-    }
+  //   if (!equal(dbConfigs, managerConfigs)) {
+  //     shouldRefresh = true;
+  //   }
 
-    if (shouldRefresh) {
-      const refreshPromises = dbConfigs.map(({ name, config }) => {
-        const managerConfig = manager
-          .getClients()
-          .find((c) => c.getInfo().name === name)
-          ?.getInfo();
-        if (!managerConfig) {
-          return manager.addClient(name, config);
-        }
-        if (
-          !equal(managerConfig.config, config) &&
-          managerConfig.status === "connected"
-        ) {
-          return manager.refreshClient(name, config);
-        }
-      });
-      const deletePromises = managerConfigs
-        .filter((c) => {
-          const dbConfig = dbConfigs.find((c2) => c2.name === c.name);
-          return !dbConfig;
-        })
-        .map((c) => manager.removeClient(c.name));
-      await Promise.all([...refreshPromises, ...deletePromises]);
-    }
-  }
-
-  function startInterval() {
-    if (intervalId) return;
-    intervalId = setInterval(
-      () => debounce(checkAndRefreshClients, 5000),
-      60000
-    );
-    intervalId.unref();
-  }
+  //   if (shouldRefresh) {
+  //     const refreshPromises = dbConfigs.map(({ name, config }) => {
+  //       const managerConfig = manager
+  //         .getClients()
+  //         .find((c) => c.getInfo().name === name)
+  //         ?.getInfo();
+  //       if (!managerConfig) {
+  //         return manager.addClient(name, config);
+  //       }
+  //       if (
+  //         !equal(managerConfig.config, config) &&
+  //         managerConfig.status === "connected"
+  //       ) {
+  //         return manager.refreshClient(name, config);
+  //       }
+  //     });
+  //     const deletePromises = managerConfigs
+  //       .filter((c) => {
+  //         const dbConfig = dbConfigs.find((c2) => c2.name === c.name);
+  //         return !dbConfig;
+  //       })
+  //       .map((c) => manager.removeClient(c.name));
+  //     await Promise.all([...refreshPromises, ...deletePromises]);
+  //   }
+  // }
 
   return {
     init,
@@ -125,7 +111,6 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
         const session = await getSession();
         if (session?.user?.id) {
           currentUserId = session.user.id;
-          startInterval();
           await saveToCacheFromDb();
         }
         return Object.fromEntries(configs);
@@ -140,7 +125,6 @@ export function createDbBasedMCPConfigsStorage(): MCPConfigStorage {
         throw new Error("User session not found");
       }
       currentUserId = session.user.id;
-      startInterval();
       try {
         const existingServer = await mcpRepository.selectServerByName(name);
         if (existingServer) {

@@ -1,6 +1,6 @@
 "use server";
 import type { MCPServerConfig } from "app-types/mcp";
-import { mcpClientsManager } from "lib/ai/mcp/mcp-manager";
+import { createUserScopedMCPManager } from "lib/ai/mcp/mcp-manager";
 import { isMaybeMCPServerConfig } from "lib/ai/mcp/is-mcp-config";
 import { detectConfigChanges } from "lib/ai/mcp/mcp-config-diff";
 import { z } from "zod";
@@ -10,29 +10,34 @@ import { getSession } from "auth/server";
 
 export async function selectMcpClientsAction() {
   const session = await getSession();
-  console.log("Session form selectMcpClientsAction ", session);
   if (!session?.user?.id) {
     return [];
   }
 
-  // Get the storage from the manager
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
   const storage = (mcpClientsManager as any).storage;
   if (storage) {
-    // Load configs for the current user
     await storage.loadAll(session.user.id);
   }
-
   const list = mcpClientsManager.getClients();
-  return list.map((client) => {
-    return client.getInfo();
-  });
+  return list.map((client) => client.getInfo());
 }
 
 export async function selectMcpClientAction(name: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   const client = mcpClientsManager
     .getClients()
     .find((client) => client.getInfo().name === name);
-
   if (!client) {
     throw new Error("Client not found");
   }
@@ -50,6 +55,16 @@ export async function updateMcpConfigByJsonAction(
   json: Record<string, MCPServerConfig>
 ) {
   Object.values(json).forEach(validateConfig);
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   const prevConfig = Object.fromEntries(
     mcpClientsManager
       .getClients()
@@ -88,14 +103,44 @@ export async function insertMcpClientAction(
     );
   }
 
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   await mcpClientsManager.addClient(name, config);
 }
 
 export async function removeMcpClientAction(name: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   await mcpClientsManager.removeClient(name);
 }
 
 export async function connectMcpClientAction(name: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   const client = mcpClientsManager
     .getClients()
     .find((client) => client.getInfo().name === name);
@@ -106,6 +151,16 @@ export async function connectMcpClientAction(name: string) {
 }
 
 export async function disconnectMcpClientAction(name: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   const client = mcpClientsManager
     .getClients()
     .find((client) => client.getInfo().name === name);
@@ -116,13 +171,34 @@ export async function disconnectMcpClientAction(name: string) {
 }
 
 export async function refreshMcpClientAction(name: string) {
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   await mcpClientsManager.refreshClient(name);
 }
+
 export async function updateMcpClientAction(
   name: string,
   config: MCPServerConfig
 ) {
   console.log("Updating MCP client", name, config);
+  const session = await getSession();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+  const mcpClientsManager = createUserScopedMCPManager();
+  await mcpClientsManager.init();
+  const storage = (mcpClientsManager as any).storage;
+  if (storage) {
+    await storage.loadAll(session.user.id);
+  }
   await mcpClientsManager.refreshClient(name, config);
 }
 
@@ -132,13 +208,23 @@ export async function callMcpToolAction(
   input?: unknown
 ) {
   return safe(() => {
-    const client = mcpClientsManager
-      .getClients()
-      .find((client) => client.getInfo().name === mcpName);
-    if (!client) {
-      throw new Error("Client not found");
-    }
-    return client.callTool(toolName, input).then((res) => {
+    // This function is called from the client, so we need to get the session
+    // and create a user-scoped manager
+    return getSession().then(async (session) => {
+      if (!session?.user?.id) {
+        throw new Error("Unauthorized");
+      }
+      const mcpClientsManager = createUserScopedMCPManager();
+      await mcpClientsManager.init();
+      const storage = (mcpClientsManager as any).storage;
+      await storage.loadAll(session.user.id);
+      const client = mcpClientsManager
+        .getClients()
+        .find((client) => client.getInfo().name === mcpName);
+      if (!client) {
+        throw new Error("Client not found");
+      }
+      const res = await client.callTool(toolName, input);
       if (res?.isError) {
         throw new Error(
           res.content?.[0]?.text ??

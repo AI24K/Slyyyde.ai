@@ -1,4 +1,5 @@
 import type {
+  MCPHTTPConfig,
   MCPServerConfig,
   MCPSseConfig,
   MCPStdioConfig,
@@ -23,12 +24,21 @@ export function isMaybeSseConfig(config: unknown): config is MCPSseConfig {
   }
   return "url" in config && typeof config.url === "string";
 }
+/**
+ * Type guard to check if an object is potentially a valid SSE config
+ */
+export function isMaybeHTTPConfig(config: unknown): config is MCPHTTPConfig {
+  if (typeof config !== "object" || config === null) {
+    return false;
+  }
+  return "url" in config && typeof config.url === "string";
+}
 
 /**
  * Type guard for MCP server config (either stdio or SSE)
  */
 export function isMaybeMCPServerConfig(
-  config: unknown,
+  config: unknown
 ): config is MCPServerConfig {
   return isMaybeStdioConfig(config) || isMaybeSseConfig(config);
 }
