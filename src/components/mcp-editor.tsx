@@ -4,6 +4,7 @@ import {
   MCPServerConfig,
   MCPSseConfigZodSchema,
   MCPStdioConfigZodSchema,
+  MCPHTTPConfigZodSchema
 } from "app-types/mcp";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -20,6 +21,7 @@ import { Loader } from "lucide-react";
 import {
   isMaybeMCPServerConfig,
   isMaybeSseConfig,
+  isMaybeHTTPConfig
 } from "lib/ai/mcp/is-mcp-config";
 import { updateMcpClientAction } from "@/app/api/mcp/actions";
 import { insertMcpClientAction } from "@/app/api/mcp/actions";
@@ -32,9 +34,9 @@ interface MCPEditorProps {
   name?: string;
 }
 
-const STDIO_ARGS_ENV_PLACEHOLDER = `/** SSE Example for Smithery Notion */
+const STDIO_ARGS_ENV_PLACEHOLDER = `/** HTTP Example for COMPOSIO Gmail */
 {
-  "url": "https://server.smithery.ai/@smithery/notion/mcp",
+  "url": "https://mcp.composio.dev/composio/server/laskdfj-sadf-asdfl-sadf/mcp",
   "headers": {
     "Authorization": "Bearer YOUR_API_KEY"
   }
@@ -101,7 +103,7 @@ export default function MCPEditor({
   const validateConfig = (jsonConfig: unknown): boolean => {
     const result = isMaybeSseConfig(jsonConfig)
       ? MCPSseConfigZodSchema.safeParse(jsonConfig)
-      : MCPStdioConfigZodSchema.safeParse(jsonConfig);
+      :isMaybeHTTPConfig(jsonConfig)? MCPHTTPConfigZodSchema.safeParse(jsonConfig)  :MCPStdioConfigZodSchema.safeParse(jsonConfig);
     if (!result.success) {
       handleErrorWithToast(result.error, "mcp-editor-error");
     }

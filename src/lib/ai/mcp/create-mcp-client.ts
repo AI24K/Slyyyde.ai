@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
   type MCPServerInfo,
@@ -10,7 +10,7 @@ import {
   type MCPToolInfo,
 } from "app-types/mcp";
 import { jsonSchema, Tool, tool, ToolExecutionOptions } from "ai";
-import { isMaybeSseConfig, isMaybeStdioConfig } from "./is-mcp-config";
+import { isMaybeHTTPConfig, isMaybeStdioConfig } from "./is-mcp-config";
 import logger from "logger";
 import type { ConsolaInstance } from "consola";
 import { colorize } from "consola/utils";
@@ -122,14 +122,15 @@ export class MCPClient {
           ),
           cwd: process.cwd(),
         });
-      } else if (isMaybeSseConfig(this.serverConfig)) {
+      } else if (isMaybeHTTPConfig(this.serverConfig)) {
         const config = MCPSseConfigZodSchema.parse(this.serverConfig);
         const url = new URL(config.url);
-        transport = new SSEClientTransport(url, {
-          requestInit: {
-            headers: config.headers,
-          },
-        });
+        // transport = new SSEClientTransport(url, {
+        //   requestInit: {
+        //     headers: config.headers,
+        //   },
+        // });
+        transport = new StreamableHTTPClientTransport(url);
       } else {
         throw new Error("Invalid server config");
       }

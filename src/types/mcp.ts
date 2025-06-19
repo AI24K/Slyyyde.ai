@@ -11,6 +11,10 @@ export const MCPStdioConfigZodSchema = z.object({
   env: z.record(z.string(), z.string()).optional(),
 });
 
+export const MCPHTTPConfigZodSchema = z.object({
+  url: z.string().url({ message: "Please provide a valid url" }),
+});
+
 export const AllowedMCPServerZodSchema = z.object({
   tools: z.array(z.string()),
   // resources: z.array(z.string()).optional(),
@@ -19,6 +23,7 @@ export const AllowedMCPServerZodSchema = z.object({
 export type AllowedMCPServer = z.infer<typeof AllowedMCPServerZodSchema>;
 
 export type MCPSseConfig = z.infer<typeof MCPSseConfigZodSchema>;
+export type MCPHTTPConfig = z.infer<typeof MCPHTTPConfigZodSchema>;
 export type MCPStdioConfig = z.infer<typeof MCPStdioConfigZodSchema>;
 
 export type MCPServerConfig = MCPSseConfig | MCPStdioConfig;

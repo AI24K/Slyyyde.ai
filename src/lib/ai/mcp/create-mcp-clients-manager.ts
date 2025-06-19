@@ -65,9 +65,7 @@ export class MCPClientsManager {
       }
     }
     const client = createMCPClient(name, serverConfig);
-    console.log(
-      `Adding MCP client: ${name} with config: ${JSON.stringify(serverConfig)}`
-    );
+    console.log(`Adding MCP client: ${name}`);
     this.clients.set(name, client);
     return client.connect();
   }
