@@ -21,25 +21,23 @@ export default function Page() {
     "mcp-list",
     selectMcpClientsAction,
     {
-      refreshInterval: 10000,
+      // refreshInterval: 10000,
       fallbackData: [],
       onError: handleErrorWithToast,
       onSuccess: (data) => appStoreMutate({ mcpList: data }),
-    },
+    }
   );
-
-  console.log("MCP List:", mcpList);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
   // Get all tools from all MCP servers
   const allTools = useMemo(() => {
-    return mcpList.flatMap(server => 
-      server?.tools?.map(tool => ({
+    return mcpList.flatMap((server) =>
+      server?.tools?.map((tool) => ({
         ...tool,
         serverName: server.name,
-        serverDescription: server.description || 'No description',
+        serverDescription: server.description || "No description",
       }))
     );
   }, [mcpList]);
@@ -53,17 +51,19 @@ export default function Page() {
         tool.name.toLowerCase().includes(lowercasedSearch) ||
         tool?.description.toLowerCase().includes(lowercasedSearch) ||
         tool?.serverName.toLowerCase().includes(lowercasedSearch) ||
-        (tool?.serverDescription?.toLowerCase() || '').includes(lowercasedSearch)
+        (tool?.serverDescription?.toLowerCase() || "").includes(
+          lowercasedSearch
+        )
     );
   }, [allTools, debouncedSearchTerm]);
 
   // Group tools by server for display
   const toolsByServer = useMemo(() => {
     const serverMap = new Map();
-    
-    filteredTools.forEach(tool => {
+
+    filteredTools.forEach((tool) => {
       if (!serverMap.has(tool?.serverName)) {
-        const server = mcpList.find(s => s.name === tool?.serverName);
+        const server = mcpList.find((s) => s.name === tool?.serverName);
         serverMap.set(tool?.serverName, {
           ...server,
           tools: [],
@@ -83,7 +83,7 @@ export default function Page() {
             <h1 className="text-2xl font-bold">MCP Servers</h1>
             <div className="flex-1" />
             <div className="flex gap-2">
-              <Link href="https://smithery.ai/" target="_blank">
+              <Link href="https://composio.dev/" target="_blank">
                 <Button className="font-semibold" variant={"ghost"}>
                   Server Market
                 </Button>
@@ -99,7 +99,7 @@ export default function Page() {
               </Link>
             </div>
           </div>
-          
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -110,10 +110,11 @@ export default function Page() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           {searchTerm && (
             <div className="text-sm text-muted-foreground">
-              Found {filteredTools.length} tools matching &quot;{searchTerm}&quot;
+              Found {filteredTools.length} tools matching &quot;{searchTerm}
+              &quot;
             </div>
           )}
         </div>
@@ -131,9 +132,14 @@ export default function Page() {
                   <h3 className="text-lg font-medium">{server.name}</h3>
                   <div className="space-y-4">
                     {server?.tools?.map((tool) => (
-                      <div key={`${server.name}-${tool.name}`} className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                      <div
+                        key={`${server.name}-${tool.name}`}
+                        className="p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      >
                         <div className="font-medium">{tool.name}</div>
-                        <div className="text-sm text-muted-foreground">{tool.description}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {tool.description}
+                        </div>
                         <div className="mt-2 text-xs text-muted-foreground">
                           Server: {server.name}
                         </div>
@@ -163,7 +169,7 @@ export default function Page() {
             </div>
           )}
         </div>
-        {!searchTerm && <MCPOverview  />}
+        {!searchTerm && <MCPOverview />}
       </div>
     </ScrollArea>
   );
