@@ -25,7 +25,6 @@ import { ThreadDropdown } from "../thread-dropdown";
 import { appStore } from "@/app/store";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { GithubIcon } from "ui/github-icon";
 import { useShallow } from "zustand/shallow";
 import TemporaryChat from "../temporary-chat";
 import { getShortcutKeyList, Shortcuts } from "lib/keyboard-shortcuts";
@@ -36,7 +35,7 @@ function ThreadDropdownComponent() {
       state.threadList,
       state.currentThreadId,
       state.projectList,
-    ]),
+    ])
   );
   const currentThread = useMemo(() => {
     return threadList.find((thread) => thread.id === currentThreadId);
@@ -44,7 +43,7 @@ function ThreadDropdownComponent() {
 
   const currentProject = useMemo(() => {
     return projectList.find(
-      (project) => project.id === currentThread?.projectId,
+      (project) => project.id === currentThread?.projectId
     );
   }, [currentThread, projectList]);
 
@@ -128,14 +127,6 @@ export function AppHeader() {
 
       <div className="flex items-center gap-1">
         <TemporaryChat />
-        <Link
-          href="https://github.com/cgoinglove/mcp-client-chatbot"
-          target="_blank"
-        >
-          <Button variant="ghost" size="icon">
-            <GithubIcon className="w-4 h-4 fill-foreground" />
-          </Button>
-        </Link>
 
         <Button variant="ghost" size="icon" onClick={toggleTheme}>
           {isMounted && <ThemeIcon className="w-5 h-5" />}

@@ -4,9 +4,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from "ui/sidebar";
 import Link from "next/link";
@@ -17,13 +14,14 @@ import { AppSidebarMenus } from "./app-sidebar-menus";
 import { AppSidebarProjects } from "./app-sidebar-projects";
 import { AppSidebarThreads } from "./app-sidebar-threads";
 import { AppSidebarUser } from "./app-sidebar-user";
-import { MCPIcon } from "ui/mcp-icon";
 import { isShortcutEvent, Shortcuts } from "lib/keyboard-shortcuts";
+import Image from "next/image";
 
 const browserSidebarStorage = getStorageManager<boolean>("sidebar_state");
 
 export function AppSidebar() {
   const { open, toggleSidebar } = useSidebar();
+  // const { resolvedTheme } = useTheme();
   const router = useRouter();
 
   // persist sidebar state
@@ -51,8 +49,26 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-0.5">
+        <Link
+          href={`/`}
+          onClick={(e) => {
+            e.preventDefault();
+            router.push("/");
+            router.refresh();
+          }}
+          className="flex items-center justify-center w-full text-black dark:text-white"
+        >
+          <Image
+            src={"/brand/slyyyde-logo.png"}
+            alt="Slyyyde AI"
+            width={1000}
+            height={1000}
+            className="w-full  h-28 object-cover  text-black"
+            priority
+          />
+        </Link>
+        {/* <SidebarMenu>
+          <SidebarMenuItem className="flex items-center justify-center py-4">
             <SidebarMenuButton asChild>
               <Link
                 href={`/`}
@@ -61,13 +77,20 @@ export function AppSidebar() {
                   router.push("/");
                   router.refresh();
                 }}
+                className="flex items-center justify-center w-full"
               >
-                <MCPIcon className="size-4 fill-foreground" />
-                <h4 className="font-bold">MCP/SLYYYDE-AI</h4>
+                <Image
+                  src={"/brand/slyyyde-logo.png"}
+                  alt="Slyyyde AI"
+                  width={180}
+                  height={90}
+                  className="h-40 w-auto object-contain transition-transform hover:scale-105"
+                  priority
+                />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> */}
       </SidebarHeader>
 
       <SidebarContent className="mt-6">
