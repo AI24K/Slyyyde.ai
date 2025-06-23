@@ -52,6 +52,11 @@ export const auth = betterAuth({
       generateId: false,
     },
   },
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://www.slyyyde.tech",
+    "https://slyyyde.tech",
+  ],
   account: {
     accountLinking: {
       trustedProviders: ["google", "github"],
