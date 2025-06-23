@@ -52,3 +52,5 @@ local-data
 .cursorrules
 .cursor
 *.ignore
+temp_auto_push.bat
+temp_interactive_push.bat
