@@ -30,7 +30,6 @@ export const auth = betterAuth({
       verification: VerificationSchema,
     },
   }),
-  baseURL: process.env.NEXT_PUBLIC_AUTH_BASE_URL,
   emailAndPassword: {
     enabled: true,
     disableSignUp: process.env.DISABLE_SIGN_UP == "true" ? true : false,
