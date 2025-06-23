@@ -20,6 +20,7 @@ import { authClient } from "auth/client";
 import { toast } from "sonner";
 import { GithubIcon } from "ui/github-icon";
 import { GoogleIcon } from "ui/google-icon";
+import Image from "next/image";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState(false);
@@ -41,8 +42,8 @@ export default function SignInPage() {
           onError(ctx) {
             toast.error(ctx.error.message || ctx.error.statusText);
           },
-        },
-      ),
+        }
+      )
     )
       .watch(() => setLoading(false))
       .unwrap();
@@ -76,6 +77,16 @@ export default function SignInPage() {
     <div className="w-full h-full flex flex-col p-4 md:p-8 justify-center">
       <Card className="w-full md:max-w-md bg-background border-none mx-auto shadow-none">
         <CardHeader className="my-4">
+          <div className="flex lg:hidden items-center justify-center w-full text-black dark:text-white">
+            <Image
+              src={"/brand/slyyyde-logo.png"}
+              alt="Slyyyde AI"
+              width={1000}
+              height={1000}
+              className="h-28 md:h-56 object-cover transition-transform hover:scale-105 text-black"
+              priority
+            />
+          </div>
           <CardTitle className="text-2xl text-center my-1">
             Welcome Back
           </CardTitle>
@@ -137,11 +148,21 @@ export default function SignInPage() {
             <div className="flex-1 h-px bg-accent"></div>
           </div>
           <div className="flex gap-2 w-full">
-            <Button variant="outline" onClick={googleSignIn} className="flex-1">
+            <Button
+              variant="outline"
+              disabled
+              onClick={googleSignIn}
+              className="flex-1"
+            >
               <GoogleIcon className="size-4 fill-foreground" />
               Google
             </Button>
-            <Button variant="outline" onClick={githubSignIn} className="flex-1">
+            <Button
+              variant="outline"
+              disabled
+              onClick={githubSignIn}
+              className="flex-1"
+            >
               <GithubIcon className="size-4 fill-foreground" />
               GitHub
             </Button>
