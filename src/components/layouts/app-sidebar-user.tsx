@@ -28,6 +28,7 @@ import { appStore } from "@/app/store";
 import { BASE_THEMES } from "lib/const";
 import { capitalizeFirstLetter } from "lib/utils";
 import { authClient } from "auth/client";
+import { toast } from "sonner";
 
 export function AppSidebarUser() {
   const appStoreMutate = appStore((state) => state.mutate);
@@ -42,11 +43,14 @@ export function AppSidebarUser() {
   const onThemeSelect = (value: string) => {
     setTheme(isDark ? `${value}-dark` : value);
   };
-
-  const logout = () => {
-    authClient.signOut().finally(() => {
+  const logout = async () => {
+    try {
+      await authClient.signOut();
       window.location.reload();
-    });
+    } catch (error: any) {
+      // You can replace alert with a toast or other UI feedback if available
+      toast.error("Failed to sign out: " + (error?.message || error));
+    }
   };
 
   return (
