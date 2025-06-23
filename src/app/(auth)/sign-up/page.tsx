@@ -21,6 +21,7 @@ import { UserZodSchema } from "app-types/user";
 import { existsByEmailAction } from "@/app/api/auth/actions";
 import { authClient } from "auth/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function SignUpPage() {
   const [step, setStep] = useState(1);
@@ -54,7 +55,7 @@ export default function SignUpPage() {
       return;
     }
     const exists = await safeProcessWithLoading(() =>
-      existsByEmailAction(formData.email),
+      existsByEmailAction(formData.email)
     ).orElse(false);
     if (exists) {
       toast.error("Email already exists");
@@ -74,7 +75,7 @@ export default function SignUpPage() {
 
   const successPasswordStep = async () => {
     const { success } = UserZodSchema.shape.password.safeParse(
-      formData.password,
+      formData.password
     );
     if (!success) {
       toast.error("Password must be at least 8 characters long");
@@ -94,8 +95,8 @@ export default function SignUpPage() {
           onSuccess() {
             router.push("/");
           },
-        },
-      ),
+        }
+      )
     ).unwrap();
   };
 
@@ -108,6 +109,16 @@ export default function SignUpPage() {
       </div>
       <Card className="w-full md:max-w-md bg-background border-none mx-auto gap-0 shadow-none">
         <CardHeader>
+          <div className="flex lg:hidden items-center justify-center w-full text-black dark:text-white">
+            <Image
+              src={"/brand/slyyyde-logo.png"}
+              alt="Slyyyde AI"
+              width={1000}
+              height={1000}
+              className="h-28 md:h-56 object-cover transition-transform hover:scale-105 text-black"
+              priority
+            />
+          </div>
           <CardTitle className="text-2xl text-center ">
             Create an account
           </CardTitle>

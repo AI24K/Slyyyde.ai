@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { handleErrorWithToast } from "ui/shared-toast";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_AUTH_BASE_URL || "http://localhost:3000",
   fetchOptions: {
     onError(e) {
       if (e.error.status === 429) {
